@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crousty N'thai - Arcade</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;900&display=swap');
+
+        body {
+            background-color: #050505;
+            background-image: radial-gradient(circle, #001a1a 0%, #050505 100%);
+            font-family: 'Orbitron', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .arcade-cabinet {
+            background: #111;
+            padding: 30px;
+            border: 4px solid #00ff88;
+            border-radius: 30px;
+            box-shadow: 0 0 25px #00ff88, inset 0 0 15px #0088ff;
+            text-align: center;
+            width: 85%;
+            max-width: 400px;
+        }
+
+        h1 { font-size: 2em; margin-bottom: 5px; text-shadow: 0 0 10px #0088ff; }
+        .sub-title { color: #00f2ff; font-size: 0.7em; margin-bottom: 20px; letter-spacing: 3px; }
+
+        input[type="tel"] {
+            background: #000;
+            border: 2px solid #0088ff;
+            padding: 12px;
+            border-radius: 10px;
+            color: #00ff88;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1em;
+            text-align: center;
+            width: 80%;
+            margin-bottom: 15px;
+            outline: none;
+        }
+
+        .slot-machine {
+            display: flex;
+            justify-content: space-around;
+            background: #000;
+            padding: 15px;
+            border-radius: 15px;
+            border: 2px solid #00ff88;
+            margin: 15px 0;
+        }
+
+        .slot {
+            width: 65px;
+            height: 85px;
+            line-height: 85px;
+            font-size: 40px;
+            background: #1a1a1a;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+
+        .btn-main {
+            background: linear-gradient(90deg, #0088ff, #00ff88);
+            color: #000;
+            border: none;
+            padding: 15px;
+            border-radius: 12px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1em;
+            font-weight: 900;
+            cursor: pointer;
+            width: 100%;
+            text-transform: uppercase;
+        }
+
+        .btn-main:disabled { filter: grayscale(1); opacity: 0.6; }
+
+        .btn-back {
+            background: transparent;
+            color: #00f2ff;
+            border: 1px solid #00f2ff;
+            padding: 10px;
+            margin-top: 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Orbitron', sans-serif;
+            width: 100%;
+            text-transform: uppercase;
+            font-size: 0.8em;
+        }
+
+        #result { margin-top: 20px; font-weight: bold; min-height: 30px; font-size: 1.1em; }
+        .blink { animation: blinker 1.5s linear infinite; }
+        @keyframes blinker { 50% { opacity: 0.3; } }
+    </style>
+</head>
+<body>
+
+<div class="arcade-cabinet">
+    <h1>CROUSTY N'THAI</h1>
+    <div class="sub-title">ZONE DE RÉCOMPENSE</div>
+
+    <div id="step-tel">
+        <p class="blink" style="font-size: 0.8em;">IDENTIFICATION REQUISE</p>
+        <input type="tel" id="phone" placeholder="06XXXXXXXX" maxlength="10">
+        <button class="btn-main" onclick="validerTel()">VALIDER</button>
+    </div>
+
+    <div id="step-game" style="display:none;">
+        <div class="slot-machine">
+            <div id="s1" class="slot">🥡</div>
+            <div id="s2" class="slot">🥡</div>
+            <div id="s3" class="slot">🥡</div>
+        </div>
+        <button id="spinBtn" class="btn-main" onclick="jouer()">LANCER !</button>
+        <div id="result"></div>
+        <button id="backBtn" class="btn-back" style="display:none;" onclick="retour()">⬅ JOUEUR SUIVANT</button>
+    </div>
+</div>
+
+<script>
+    const items = ["🍗", "🥤", "🍰", "🥡", "🍤"];
+    let numTel = "";
+
+    function validerTel() {
+        numTel = document.getElementById('phone').value;
+        const aujourdhui = new Date().toDateString();
+
+        if(numTel.length < 10) {
+            alert("Numéro invalide.");
+            return;
+        }
+
+        if (localStorage.getItem('joué_' + numTel) === aujourdhui) {
+            alert("Ce numéro a déjà joué aujourd'hui !");
+            return;
+        }
+        
+        document.getElementById('step-tel').style.display = 'none';
+        document.getElementById('step-game').style.display = 'block';
+    }
+
+    function jouer() {
+        const btn = document.getElementById('spinBtn');
+        const res = document.getElementById('result');
+        btn.disabled = true;
+        res.innerText = "TIRAGE...";
+        res.style.color = "#0088ff";
+
+        // --- NOUVEAUX POURCENTAGES ---
+        let sort = Math.random() * 100;
+        let iconeFinal = "";
+        let msgFinal = "";
+
+        if (sort <= 8) { 
+            iconeFinal = "🍗"; msgFinal = "GAGNÉ : UN CROUSTY !"; 
+        } else if (sort <= 20) { 
+            iconeFinal = "🍰"; msgFinal = "GAGNÉ : UN TIRAMISU !"; 
+        } else if (sort <= 35) { 
+            iconeFinal = "🥤"; msgFinal = "GAGNÉ : UNE CANETTE !"; 
+        } else { 
+            iconeFinal = "PERDU"; msgFinal = "PERDU... REVIENS DEMAIN !"; 
+        }
+
+        let tours = 0;
+        let cycle = setInterval(() => {
+            document.getElementById('s1').innerText = items[Math.floor(Math.random()*items.length)];
+            document.getElementById('s2').innerText = items[Math.floor(Math.random()*items.length)];
+            document.getElementById('s3').innerText = items[Math.floor(Math.random()*items.length)];
+            tours++;
+
+            if(tours > 20) {
+                clearInterval(cycle);
+                if(iconeFinal === "PERDU") {
+                    document.getElementById('s1').innerText = "🍤";
+                    document.getElementById('s2').innerText = "🥡";
+                    document.getElementById('s3').innerText = "🥤";
+                    res.style.color = "#ff4444";
+                } else {
+                    document.getElementById('s1').innerText = iconeFinal;
+                    document.getElementById('s2').innerText = iconeFinal;
+                    document.getElementById('s3').innerText = iconeFinal;
+                    res.style.color = "#00ff88";
+                }
+                res.innerText = msgFinal;
+                localStorage.setItem('joué_' + numTel, new Date().toDateString());
+                document.getElementById('backBtn').style.display = 'block';
+            }
+        }, 100);
+    }
+
+    function retour() {
+        document.getElementById('phone').value = "";
+        document.getElementById('result').innerText = "";
+        document.getElementById('spinBtn').disabled = false;
+        document.getElementById('backBtn').style.display = 'none';
+        document.getElementById('step-game').style.display = 'none';
+        document.getElementById('step-tel').style.display = 'block';
+        document.getElementById('s1').innerText = "🥡";
+        document.getElementById('s2').innerText = "🥡";
+        document.getElementById('s3').innerText = "🥡";
+    }
+</script>
+
+</body>
+</html>
